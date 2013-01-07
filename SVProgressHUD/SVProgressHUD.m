@@ -208,8 +208,19 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
 
 - (void)updatePosition {
 	
-    CGFloat hudWidth = 100;
-    CGFloat hudHeight = 100;
+    CGFloat hudWidth;
+    CGFloat hudHeight;
+    if (self.maskType == SVProgressHUDMaskTypeCustom)
+    {
+        hudWidth = self.customHudView.frame.size.width;
+        hudHeight = self.customHudView.frame.size.height;
+    }
+    else
+    {
+        hudWidth = 100;
+        hudHeight = 100;
+    }
+
     CGFloat stringWidth = 0;
     CGFloat stringHeight = 0;
     CGRect labelRect = CGRectZero;
@@ -222,23 +233,44 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
         CGSize stringSize = [string sizeWithFont:self.stringLabel.font constrainedToSize:CGSizeMake(200, 300)];
         stringWidth = stringSize.width;
         stringHeight = stringSize.height;
+        
         if (imageUsed)
             hudHeight = 80+stringHeight;
         else
             hudHeight = 20+stringHeight;
         
-        if(stringWidth > hudWidth)
-            hudWidth = ceil(stringWidth/2)*2;
+
         
         CGFloat labelRectY = imageUsed ? 66 : 9;
         
-        if(hudHeight > 100) {
-            labelRect = CGRectMake(12, labelRectY, hudWidth, stringHeight);
-            hudWidth+=24;
-        } else {
-            hudWidth+=24;
-            labelRect = CGRectMake(0, labelRectY, hudWidth, stringHeight);
+        if (self.maskType == SVProgressHUDMaskTypeCustom)
+        {
+            if(stringWidth > hudWidth)
+                hudWidth = hudWidth;
+            
+            if(hudHeight > 100) {
+                labelRect = CGRectMake(12, labelRectY, hudWidth, stringHeight);
+                hudWidth+=24;
+            } else {
+                labelRect = CGRectMake(0, labelRectY, hudWidth, stringHeight);
+                hudWidth+=24;
+            }
         }
+        else
+        {
+            if(stringWidth > hudWidth)
+                hudWidth = ceil(stringWidth/2)*2;
+            
+            if(hudHeight > 100) {
+                labelRect = CGRectMake(12, labelRectY, hudWidth, stringHeight);
+                hudWidth+=24;
+            } else {
+                hudWidth+=24;
+                labelRect = CGRectMake(0, labelRectY, hudWidth, stringHeight);
+            }
+
+        }
+        
     }
 	
     if (self.maskType == SVProgressHUDMaskTypeCustom)
@@ -791,8 +823,16 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
     }
     
     if(!stringLabel.superview)
-        [self.hudView addSubview:stringLabel];
-    
+    {
+        if (self.maskType == SVProgressHUDMaskTypeCustom)
+        {
+            [self.customHudView addSubview:stringLabel];
+        }
+        else
+        {
+            [self.hudView addSubview:stringLabel];
+        }
+    }
     return stringLabel;
 }
 
