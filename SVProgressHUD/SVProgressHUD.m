@@ -286,13 +286,13 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
         self.stringLabel.frame = labelRect;
         
         if(string) {
-            self.spinnerView.center = CGPointMake(ceil(CGRectGetWidth(self.customHudView.bounds)/2)+0.5, 40.5);
+            self.customSpinnerView.center = CGPointMake(ceil(CGRectGetWidth(self.customHudView.bounds)/2)+0.5, 40.5);
             
             if(self.progress != -1)
                 self.backgroundRingLayer.position = self.ringLayer.position = CGPointMake((CGRectGetWidth(self.customHudView.bounds)/2), (CGRectGetWidth(self.customHudView.bounds)/2-SVProgressHUDRingRadius)-8);
         }
         else {
-            self.spinnerView.center = CGPointMake(ceil(CGRectGetWidth(self.customHudView.bounds)/2)+0.5, ceil(self.customHudView.bounds.size.height/2)+0.5);
+            self.customSpinnerView.center = CGPointMake(ceil(CGRectGetWidth(self.customHudView.bounds)/2)+0.5, ceil(self.customHudView.bounds.size.height/2)+0.5);
             
             if(self.progress != -1)
                 self.backgroundRingLayer.position = self.ringLayer.position = CGPointMake((CGRectGetWidth(self.customHudView.bounds)/2), CGRectGetWidth(self.customHudView.bounds)/2-SVProgressHUDRingRadius);
@@ -485,12 +485,14 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
     if(progress >= 0) {
         self.imageView.image = nil;
         self.imageView.hidden = NO;
-        [self.spinnerView stopAnimating];
+        [self stopSpinning];
+//        [self.spinnerView stopAnimating];
         self.ringLayer.strokeEnd = progress;
     }
     else {
         [self cancelRingLayerAnimation];
-        [self.spinnerView startAnimating];
+//        [self.spinnerView startAnimating];
+        [self startSpinning];
     }
     
     if(self.maskType != SVProgressHUDMaskTypeNone) {
@@ -566,7 +568,8 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
     self.imageView.hidden = NO;
     self.stringLabel.text = string;
     [self updatePosition];
-    [self.spinnerView stopAnimating];
+//    [self.spinnerView stopAnimating];
+    [self stopSpinning];
     
     self.fadeOutTimer = [NSTimer timerWithTimeInterval:duration target:self selector:@selector(dismiss) userInfo:nil repeats:NO];
     [[NSRunLoop mainRunLoop] addTimer:self.fadeOutTimer forMode:NSRunLoopCommonModes];
@@ -876,6 +879,46 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
     return spinnerView;
 }
 
+- (void)startSpinning
+{
+    if (self.maskType == SVProgressHUDMaskTypeCustom)
+    {
+        self.spinnerView.hidden = YES;
+        self.customSpinnerView.hidden = NO;
+        CGFloat rotations = 1.0f;
+        CGFloat duration = 1.0f;
+        float repeat = 1000.f;
+        
+        CABasicAnimation* rotationAnimation;
+        rotationAnimation = [CABasicAnimation animationWithKeyPath:@"transform.rotation.z"];
+        rotationAnimation.toValue = [NSNumber numberWithFloat: M_PI * 2.0 /* full rotation*/ * rotations * duration ];
+        rotationAnimation.duration = duration;
+        rotationAnimation.cumulative = YES;
+        rotationAnimation.repeatCount = repeat;
+        
+        [self.customSpinnerView.layer addAnimation:rotationAnimation forKey:@"rotationAnimation"];
+    }
+    else
+    {
+//        [self.spinnerView startAnimating];
+        [self startSpinning];
+    }
+}
+
+- (void)stopSpinning
+{
+    if (self.maskType == SVProgressHUDMaskTypeCustom)
+    {
+        [self.customSpinnerView.layer removeAllAnimations];
+        self.customSpinnerView.hidden = YES;
+    }
+    else
+    {
+//        [self.spinnerView stopAnimating];
+        [self stopSpinning];
+    }
+}
+
 
 - (UIImageView *)customSpinnerView
 {
@@ -884,6 +927,7 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
     {
         customSpinnerView = [[UIImageView alloc]initWithImage:customSpinnerImage];
 		customSpinnerView.bounds = CGRectMake(0, 0, 36, 36);
+        
     }
     
     if(!customSpinnerView.superview)
