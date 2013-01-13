@@ -13,8 +13,13 @@
 CGFloat SVProgressHUDRingRadius = 14;
 CGFloat SVProgressHUDRingThickness = 6;
 
+//custom hud iamge setting
 NSString *const CUSTOM_HUD_BACKGROUND = @"custom_hud_bg.png";
-NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
+NSString *const CUSTOM_SPINNER_IMAGE  = @"spinner.png";
+
+//animation hud image setting
+NSString *const ANIMATION_SPINNER_IMAGE  = @"spinner%d.png";
+const int ANIMATION_COUNT = 8;
 
 
 @interface SVProgressHUD ()
@@ -32,6 +37,9 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
 //custom
 @property (nonatomic, strong, readonly) UIImageView *customHudView;
 @property (nonatomic, strong, readonly) UIImageView *customSpinnerView;
+
+//animation
+@property (nonatomic, strong, readonly) UIImageView *animationSpinnerView;
 
 @property (nonatomic, readwrite) CGFloat progress;
 @property (nonatomic, strong) CAShapeLayer *backgroundRingLayer;
@@ -69,7 +77,8 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
             spinnerView,
             visibleKeyboardHeight,
             customHudView,
-            customSpinnerView;
+            customSpinnerView,
+            animationSpinnerView;
 
 + (SVProgressHUD*)sharedView {
     static dispatch_once_t once;
@@ -210,7 +219,7 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
 	
     CGFloat hudWidth;
     CGFloat hudHeight;
-    if (self.maskType == SVProgressHUDMaskTypeCustom)
+    if (self.maskType == SVProgressHUDMaskTypeCustom || self.maskType == SVProgressHUDMaskTypeAnimation)
     {
         hudWidth = self.customHudView.frame.size.width;
         hudHeight = self.customHudView.frame.size.height;
@@ -243,7 +252,7 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
         
         CGFloat labelRectY = imageUsed ? 66 : 9;
         
-        if (self.maskType == SVProgressHUDMaskTypeCustom)
+        if (self.maskType == SVProgressHUDMaskTypeCustom || self.maskType == SVProgressHUDMaskTypeAnimation)
         {
             if(stringWidth > hudWidth)
                 hudWidth = hudWidth;
@@ -273,7 +282,7 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
         
     }
 	
-    if (self.maskType == SVProgressHUDMaskTypeCustom)
+    if (self.maskType == SVProgressHUDMaskTypeCustom || self.maskType == SVProgressHUDMaskTypeAnimation)
     {
         self.customHudView.bounds = CGRectMake(0, 0, self.customHudView.frame.size.width, self.customHudView.frame.size.height);
         
@@ -286,12 +295,27 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
         self.stringLabel.frame = labelRect;
         
         if(string) {
-            self.customSpinnerView.center = CGPointMake(ceil(CGRectGetWidth(self.customHudView.bounds)/2)+0.5, 40.5);
+            if (self.maskType == SVProgressHUDMaskTypeCustom)
+            {
+                self.customSpinnerView.center = CGPointMake(ceil(CGRectGetWidth(self.customHudView.bounds)/2)+0.5, 40.5);
+            }
+            else if (self.maskType == SVProgressHUDMaskTypeAnimation)
+            {
+                self.animationSpinnerView.center = CGPointMake(ceil(CGRectGetWidth(self.customHudView.bounds)/2)+0.5, 40.5);
+            }
             
             if(self.progress != -1)
                 self.backgroundRingLayer.position = self.ringLayer.position = CGPointMake((CGRectGetWidth(self.customHudView.bounds)/2), (CGRectGetWidth(self.customHudView.bounds)/2-SVProgressHUDRingRadius)-8);
         }
         else {
+            if (self.maskType == SVProgressHUDMaskTypeCustom)
+            {
+                self.customSpinnerView.center = CGPointMake(ceil(CGRectGetWidth(self.customHudView.bounds)/2)+0.5, ceil(self.customHudView.bounds.size.height/2)+0.5);
+            }
+            else if (self.maskType == SVProgressHUDMaskTypeAnimation)
+            {
+                self.animationSpinnerView.center = CGPointMake(ceil(CGRectGetWidth(self.customHudView.bounds)/2)+0.5, ceil(self.customHudView.bounds.size.height/2)+0.5);
+            }
             self.customSpinnerView.center = CGPointMake(ceil(CGRectGetWidth(self.customHudView.bounds)/2)+0.5, ceil(self.customHudView.bounds.size.height/2)+0.5);
             
             if(self.progress != -1)
@@ -456,7 +480,7 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
 
 - (void)moveToPoint:(CGPoint)newCenter rotateAngle:(CGFloat)angle {
     
-    if (self.maskType == SVProgressHUDMaskTypeCustom)
+    if (self.maskType == SVProgressHUDMaskTypeCustom || self.maskType == SVProgressHUDMaskTypeAnimation)
     {
         self.customHudView.transform = CGAffineTransformMakeRotation(angle);
         self.customHudView.center = newCenter;
@@ -486,24 +510,24 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
         self.imageView.image = nil;
         self.imageView.hidden = NO;
         [self stopSpinning];
-//        [self.spinnerView stopAnimating];
         self.ringLayer.strokeEnd = progress;
     }
-    else {
+    else
+    {
         [self cancelRingLayerAnimation];
-//        [self.spinnerView startAnimating];
         [self startSpinning];
     }
     
-    if(self.maskType != SVProgressHUDMaskTypeNone) {
-        
+    if (self.maskType != SVProgressHUDMaskTypeNone)
+    {
         self.overlayWindow.userInteractionEnabled = YES;
         self.accessibilityLabel = string;
         self.isAccessibilityElement = YES;
     }
-    else {
+    else
+    {
         self.overlayWindow.userInteractionEnabled = NO;
-        if (self.maskType == SVProgressHUDMaskTypeCustom)
+        if (self.maskType == SVProgressHUDMaskTypeCustom || self.maskType == SVProgressHUDMaskTypeAnimation)
         {
             self.customHudView.accessibilityLabel = string;
             self.customHudView.isAccessibilityElement = YES;
@@ -518,10 +542,11 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
     [self.overlayWindow setHidden:NO];
     [self positionHUD:nil];
     
+    
     if(self.alpha != 1) {
         [self registerNotifications];
         
-        if (self.maskType == SVProgressHUDMaskTypeCustom)
+        if (self.maskType == SVProgressHUDMaskTypeCustom || self.maskType == SVProgressHUDMaskTypeAnimation)
         {
             self.customHudView.transform = CGAffineTransformScale(self.customHudView.transform, 1.3, 1.3);
             
@@ -576,8 +601,9 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
 }
 
 
-- (void)dismiss {
-    if (self.maskType == SVProgressHUDMaskTypeCustom)
+- (void)dismiss
+{
+    if (self.maskType == SVProgressHUDMaskTypeCustom || self.maskType == SVProgressHUDMaskTypeAnimation)
     {
         [UIView animateWithDuration:0.15
                               delay:0
@@ -656,7 +682,7 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
 - (CAShapeLayer *)ringLayer {
     if(!_ringLayer) {
         
-        if (maskType == SVProgressHUDMaskTypeCustom)
+        if (maskType == SVProgressHUDMaskTypeCustom || maskType == SVProgressHUDMaskTypeAnimation)
         {
             CGPoint center = CGPointMake(CGRectGetWidth(customHudView.frame)/2, CGRectGetHeight(customHudView.frame)/2);
             _ringLayer = [self createRingLayerWithCenter:center radius:SVProgressHUDRingRadius lineWidth:SVProgressHUDRingThickness color:[UIColor whiteColor]];
@@ -675,7 +701,7 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
 - (CAShapeLayer *)backgroundRingLayer {
     if(!_backgroundRingLayer) {
         
-        if (maskType == SVProgressHUDMaskTypeCustom)
+        if (maskType == SVProgressHUDMaskTypeCustom || maskType == SVProgressHUDMaskTypeAnimation)
         {
             CGPoint center = CGPointMake(CGRectGetWidth(customHudView.frame)/2, CGRectGetHeight(customHudView.frame)/2);
             _backgroundRingLayer = [self createRingLayerWithCenter:center radius:SVProgressHUDRingRadius lineWidth:SVProgressHUDRingThickness color:[UIColor darkGrayColor]];
@@ -699,6 +725,10 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
     if (maskType == SVProgressHUDMaskTypeCustom)
     {
         [customHudView.layer removeAllAnimations];
+    }
+    else if (maskType == SVProgressHUDMaskTypeAnimation)
+    {
+        [animationSpinnerView stopAnimating];
     }
     else
     {
@@ -827,7 +857,7 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
     
     if(!stringLabel.superview)
     {
-        if (self.maskType == SVProgressHUDMaskTypeCustom)
+        if (self.maskType == SVProgressHUDMaskTypeCustom || self.maskType == SVProgressHUDMaskTypeAnimation)
         {
             [self.customHudView addSubview:stringLabel];
         }
@@ -845,7 +875,7 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
     
     if(!imageView.superview)
     {
-        if (self.maskType == SVProgressHUDMaskTypeCustom)
+        if (self.maskType == SVProgressHUDMaskTypeCustom || self.maskType == SVProgressHUDMaskTypeAnimation)
         {
             [self.customHudView addSubview:imageView];
         }
@@ -867,7 +897,7 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
     
     if(!spinnerView.superview)
     {
-        if(self.maskType == SVProgressHUDMaskTypeCustom)
+        if(self.maskType == SVProgressHUDMaskTypeCustom || self.maskType == SVProgressHUDMaskTypeAnimation)
         {
             [self.customHudView addSubview:spinnerView];;
         }
@@ -898,10 +928,15 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
         
         [self.customSpinnerView.layer addAnimation:rotationAnimation forKey:@"rotationAnimation"];
     }
+    else if (self.maskType == SVProgressHUDMaskTypeAnimation)
+    {
+        self.spinnerView.hidden = YES;
+        self.animationSpinnerView.hidden = NO;
+        [self.animationSpinnerView startAnimating];
+    }
     else
     {
-//        [self.spinnerView startAnimating];
-        [self startSpinning];
+        [self.spinnerView startAnimating];
     }
 }
 
@@ -912,10 +947,14 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
         [self.customSpinnerView.layer removeAllAnimations];
         self.customSpinnerView.hidden = YES;
     }
+    else if (self.maskType == SVProgressHUDMaskTypeAnimation)
+    {
+        [self.animationSpinnerView stopAnimating];
+        self.animationSpinnerView.hidden = YES;
+    }
     else
     {
-//        [self.spinnerView stopAnimating];
-        [self stopSpinning];
+        [self.spinnerView stopAnimating];
     }
 }
 
@@ -927,21 +966,49 @@ NSString *const CUSTOM_SPINNER_IMAGE  = @"custom_spinner.png";
     {
         customSpinnerView = [[UIImageView alloc]initWithImage:customSpinnerImage];
 		customSpinnerView.bounds = CGRectMake(0, 0, 36, 36);
-        
     }
     
     if(!customSpinnerView.superview)
     {
-        if(self.maskType == SVProgressHUDMaskTypeCustom)
-        {
-            [self.customHudView addSubview:customSpinnerView];
-        }
-        else
-        {
-            [self.hudView addSubview:customSpinnerView];
-        }
+        [self.customHudView addSubview:customSpinnerView];
+//        if(self.maskType == SVProgressHUDMaskTypeCustom)
+//        {
+//            [self.customHudView addSubview:customSpinnerView];
+//        }
+//        else
+//        {
+//            [self.hudView addSubview:customSpinnerView];
+//        }
     }
     return customSpinnerView;
+}
+
+- (UIImageView *)animationSpinnerView
+{
+    int animationCount = ANIMATION_COUNT;
+    NSMutableArray *spinners = [NSMutableArray arrayWithCapacity:0];
+    NSString *animationItem;
+    UIImage *animationImage;
+    
+    for (int i = 0; i < animationCount; i++)
+    {
+        animationItem =  [NSString stringWithFormat:ANIMATION_SPINNER_IMAGE,i];
+        animationImage = [UIImage imageNamed:animationItem];
+        [spinners addObject:animationImage];
+    }
+    
+    if (animationSpinnerView == nil) {
+        animationSpinnerView = [[UIImageView alloc]initWithImage:spinners[0]];
+        animationSpinnerView.animationImages = spinners;
+        animationSpinnerView.animationDuration = 0.7f;
+        animationSpinnerView.animationRepeatCount = 0;
+        animationSpinnerView.bounds = CGRectMake(0, 0, 36, 36);
+    }
+    if(!animationSpinnerView.superview)
+    {
+        [customHudView addSubview:animationSpinnerView];
+    }
+    return animationSpinnerView;
 }
 
 - (CGFloat)visibleKeyboardHeight {
