@@ -305,9 +305,10 @@ const int ANIMATION_COUNT = 8;
             }
             
             if(self.progress != -1)
-                self.backgroundRingLayer.position = self.ringLayer.position = CGPointMake((CGRectGetWidth(self.customHudView.bounds)/2), (CGRectGetWidth(self.customHudView.bounds)/2-SVProgressHUDRingRadius)-8);
+                self.backgroundRingLayer.position = self.ringLayer.position = CGPointMake((CGRectGetWidth(self.customHudView.bounds)/2), (CGRectGetWidth(self.customHudView.bounds)/2) - 36);
         }
-        else {
+        else
+        {
             if (self.maskType == SVProgressHUDMaskTypeCustom)
             {
                 self.customSpinnerView.center = CGPointMake(ceil(CGRectGetWidth(self.customHudView.bounds)/2)+0.5, ceil(self.customHudView.bounds.size.height/2)+0.5);
@@ -495,8 +496,11 @@ const int ANIMATION_COUNT = 8;
 #pragma mark - Master show/dismiss methods
 
 - (void)showProgress:(float)progress status:(NSString*)string maskType:(SVProgressHUDMaskType)hudMaskType networkIndicator:(BOOL)show {
+    
     if(!self.superview)
+    {
         [self.overlayWindow addSubview:self];
+    }
     
     self.fadeOutTimer = nil;
     self.imageView.hidden = YES;
@@ -506,7 +510,8 @@ const int ANIMATION_COUNT = 8;
     self.stringLabel.text = string;
     [self updatePosition];
     
-    if(progress >= 0) {
+    if(progress >= 0)
+    {
         self.imageView.image = nil;
         self.imageView.hidden = NO;
         [self stopSpinning];
@@ -520,24 +525,15 @@ const int ANIMATION_COUNT = 8;
     
     if (self.maskType != SVProgressHUDMaskTypeNone)
     {
-        self.overlayWindow.userInteractionEnabled = YES;
+        self.overlayWindow.userInteractionEnabled = NO;
         self.accessibilityLabel = string;
         self.isAccessibilityElement = YES;
     }
     else
     {
-        self.overlayWindow.userInteractionEnabled = NO;
-        if (self.maskType == SVProgressHUDMaskTypeCustom || self.maskType == SVProgressHUDMaskTypeAnimation)
-        {
-            self.customHudView.accessibilityLabel = string;
-            self.customHudView.isAccessibilityElement = YES;
-        }
-        else
-        {
-            self.hudView.accessibilityLabel = string;
-            self.hudView.isAccessibilityElement = YES;
-        }
+        self.customHudView.hidden = YES;
     }
+
 
     [self.overlayWindow setHidden:NO];
     [self positionHUD:nil];
@@ -548,6 +544,7 @@ const int ANIMATION_COUNT = 8;
         
         if (self.maskType == SVProgressHUDMaskTypeCustom || self.maskType == SVProgressHUDMaskTypeAnimation)
         {
+            self.customHudView.hidden = NO;
             self.customHudView.transform = CGAffineTransformScale(self.customHudView.transform, 1.3, 1.3);
             
             [UIView animateWithDuration:0.15
@@ -584,6 +581,7 @@ const int ANIMATION_COUNT = 8;
 
 
 - (void)showImage:(UIImage *)image status:(NSString *)string duration:(NSTimeInterval)duration {
+    
     [self cancelRingLayerAnimation];
     
     if(![SVProgressHUD isVisible])
@@ -593,7 +591,6 @@ const int ANIMATION_COUNT = 8;
     self.imageView.hidden = NO;
     self.stringLabel.text = string;
     [self updatePosition];
-//    [self.spinnerView stopAnimating];
     [self stopSpinning];
     
     self.fadeOutTimer = [NSTimer timerWithTimeInterval:duration target:self selector:@selector(dismiss) userInfo:nil repeats:NO];
@@ -680,6 +677,7 @@ const int ANIMATION_COUNT = 8;
 #pragma mark Ring progress animation
 
 - (CAShapeLayer *)ringLayer {
+    
     if(!_ringLayer) {
         
         if (maskType == SVProgressHUDMaskTypeCustom || maskType == SVProgressHUDMaskTypeAnimation)
@@ -699,6 +697,7 @@ const int ANIMATION_COUNT = 8;
 }
 
 - (CAShapeLayer *)backgroundRingLayer {
+    
     if(!_backgroundRingLayer) {
         
         if (maskType == SVProgressHUDMaskTypeCustom || maskType == SVProgressHUDMaskTypeAnimation)
@@ -722,6 +721,7 @@ const int ANIMATION_COUNT = 8;
 - (void)cancelRingLayerAnimation {
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
+    
     if (maskType == SVProgressHUDMaskTypeCustom)
     {
         [customHudView.layer removeAllAnimations];
@@ -897,24 +897,23 @@ const int ANIMATION_COUNT = 8;
     
     if(!spinnerView.superview)
     {
-        if(self.maskType == SVProgressHUDMaskTypeCustom || self.maskType == SVProgressHUDMaskTypeAnimation)
-        {
-            [self.customHudView addSubview:spinnerView];;
-        }
-        else
-        {
-            [self.hudView addSubview:spinnerView];;
-        }
+        [self.hudView addSubview:spinnerView];;
     }
     return spinnerView;
 }
 
 - (void)startSpinning
 {
+    self.spinnerView.hidden = YES;
+    self.customSpinnerView.hidden = YES;
+    self.animationSpinnerView.hidden = YES;
+    
     if (self.maskType == SVProgressHUDMaskTypeCustom)
     {
         self.spinnerView.hidden = YES;
         self.customSpinnerView.hidden = NO;
+        self.animationSpinnerView.hidden = YES;
+        
         CGFloat rotations = 1.0f;
         CGFloat duration = 1.0f;
         float repeat = 1000.f;
@@ -931,6 +930,7 @@ const int ANIMATION_COUNT = 8;
     else if (self.maskType == SVProgressHUDMaskTypeAnimation)
     {
         self.spinnerView.hidden = YES;
+        self.customSpinnerView.hidden = YES;
         self.animationSpinnerView.hidden = NO;
         [self.animationSpinnerView startAnimating];
     }
@@ -942,6 +942,10 @@ const int ANIMATION_COUNT = 8;
 
 - (void)stopSpinning
 {
+    self.spinnerView.hidden = YES;
+    self.customSpinnerView.hidden = YES;
+    self.animationSpinnerView.hidden = YES;
+    
     if (self.maskType == SVProgressHUDMaskTypeCustom)
     {
         [self.customSpinnerView.layer removeAllAnimations];
@@ -971,14 +975,6 @@ const int ANIMATION_COUNT = 8;
     if(!customSpinnerView.superview)
     {
         [self.customHudView addSubview:customSpinnerView];
-//        if(self.maskType == SVProgressHUDMaskTypeCustom)
-//        {
-//            [self.customHudView addSubview:customSpinnerView];
-//        }
-//        else
-//        {
-//            [self.hudView addSubview:customSpinnerView];
-//        }
     }
     return customSpinnerView;
 }
