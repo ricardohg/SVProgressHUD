@@ -195,6 +195,12 @@ const int ANIMATION_COUNT = 8;
             CGContextFillRect(context, self.bounds);
             break;
         }
+        case SVProgressHUDMaskTypeCustom: {
+            [[UIColor colorWithWhite:0 alpha:0.5] set];
+            CGContextFillRect(context, self.bounds);
+            break;
+
+        }
             
         case SVProgressHUDMaskTypeGradient: {
             
