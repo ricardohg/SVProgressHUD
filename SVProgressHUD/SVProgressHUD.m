@@ -531,7 +531,7 @@ const int ANIMATION_COUNT = 8;
     
     if (self.maskType != SVProgressHUDMaskTypeNone)
     {
-        self.overlayWindow.userInteractionEnabled = NO;
+        self.overlayWindow.userInteractionEnabled = YES;
         self.accessibilityLabel = string;
         self.isAccessibilityElement = YES;
     }
@@ -812,7 +812,7 @@ const int ANIMATION_COUNT = 8;
         overlayWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
         overlayWindow.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         overlayWindow.backgroundColor = [UIColor clearColor];
-        overlayWindow.userInteractionEnabled = NO;
+        overlayWindow.userInteractionEnabled = YES;
         overlayWindow.windowLevel = UIWindowLevelStatusBar;
     }
     return overlayWindow;
